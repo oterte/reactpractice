@@ -159,7 +159,7 @@ export default function InputSample() {
 export default function InputSample() {
     // 여러개의 문자열을 가지고있는 객체형태의 문자열을 관리해주어야 한다
     const [inputs, setInputs] = useState({
-        name:"",
+        name:"",    
         nickname:""
     })
     const {name, nickname} = inputs;
@@ -341,4 +341,200 @@ const onCreate = () =>{
 }
 
 export default App;
+```
+
+1. 배열에 항목 추가하기
+
+```javascript
+function App() {
+   // 이 값이 바뀐다고 해서 컴포넌트가 리렌더링 될 필요가 없으니 useRef를 이용해서 관리
+   const nextId = useRef(4);
+
+  const [inputs, setInputs] = useState({
+    username:'',
+    email:'',
+  })
+//input 태그의 입력값을 담을 객체 생성
+  const {username, email} = inputs
+
+// input 태그의 입력값을 가져와서 그 값을 관리
+const onChange = (e) => {
+  const {name, value} = e.target;
+  setInputs({
+    ...inputs,
+    [name] : value
+  })
+}
+
+// 이 배열을 컴포넌트의 상태로서 관리하기
+  const [users,setUsers] =useState([
+    {
+        id:1,
+        username:'carllis',
+        email:'oterte@naver.com'
+    },
+    {
+        id:2,
+        username:'pocket',
+        email:'oterte2891@gmail.com'
+    },
+    {
+        id:3,
+        username:'Liz',
+        email:'liz@example.com'
+    }
+])
+const onCreate = () =>{
+  // 새로운 유저객체 만들기
+  // 이 객체가 기존 항목에 추가될 것
+  const newUser = {
+    id:nextId.current,
+    // username과 email은 const {username, email} = inputs이 가리키는 것
+    username,
+    email,
+  }
+  // 스프레드 연산자를 이용하여 불변성을 지키면서 새로운 배열을 만들어 새 항목 추가하기
+  // 객체 형태가 아닌 배열 형태로 넣어줘야 한다.
+  setUsers([
+    ...users,
+    newUser
+  ]
+    
+  )
+  // 버튼이 클릭 될때 인풋 값 비워주기
+  setInputs({
+    username:'',
+    email:''
+  })
+
+  nextId.current += 1;
+}
+
+  return (
+    <>
+      <CreateUser username={username} email={email} onChange={onChange} onCreate={onCreate}/>
+      <UserList users={users}/>
+    </>
+  );
+}
+
+export default App;
+```
+
+2. 배열에 항목 제거하기
+
+```javascript
+// UserList.js
+function User({user, onRemove}){
+    // 같은 user.이 반복되는게 싫다면 값을 추출해서 사용해주면 된다.
+    const {username, email, id} = user
+        return(
+            <div>
+                <b>{username}</b><span>({email})</span>
+                {/* 삭제를 하고 싶은데, user.id값을 넣어서 호출해주고 싶다면 */}
+                {/* 새로운 함수를 만들어 파라미터를 넣는다 */}
+                {/* 이 버튼이 눌렷을때, 이 함수를 호출하고, 
+                이 함수에서는 props로 받아온 onRemove를 id값을 받아서 호출해준다. */}
+                {/* 즉, id가 특정 값인것을 삭제하겠다. */}
+                <button onClick={() => onRemove(id)}>삭제</button>
+            </div>
+        )
+}
+
+
+export default function UserList({users, onRemove}) {
+    console.log(users)
+  return (
+    <div>
+        {
+            users.map(
+                user => (
+                    <User 
+                    user={user} 
+                    key={user.id} 
+                    onRemove={onRemove}/>)
+            )
+        }
+    </div>
+  )
+}
+// App.js
+// 배열에서 특정 아이템 삭제 기능 구현
+// 불변성을 지켜야 하기 때문에 filter 함수 사용
+// 배열에서 특정 조건을 만족하는 원소만 추출하여 새로운 배열 반환
+const onRemove = (id) =>{
+  // users배열의 각 아이템들을 파라미터로 받아온 id와 비교하여
+  // 만약 조건에 만족한다면 새로운 배열에 넣고, 아니라면 넣지 않고
+  setUsers(users.filter(user => user.id !== id))
+}
+
+
+
+  return (
+    <>
+      <CreateUser username={username} email={email} onChange={onChange} onCreate={onCreate}/>
+      <UserList users={users} onRemove={onRemove}/>
+    </>
+  );
+
+```
+3. 배열 항목 수정하기
+- 맨 처음 기존 배열에 수정할 수 있는 값 넣어주기
+```javascript
+const [users,setUsers] =useState([
+    {
+        id:1,
+        username:'carllis',
+        email:'oterte@naver.com',
+        active:true
+    },
+    {
+        id:2,
+        username:'pocket',
+        email:'oterte2891@gmail.com',
+        active:true
+    },
+    {
+        id:3,
+        username:'Liz',
+        email:'liz@example.com',
+        active:false
+    }
+])
+```
+- 사용하고 싶은 위치에 props로 그 값을 넣어 원하는 방법으로 사용
+```javascript
+function User({user, onRemove}){
+   
+    const {username, email, id , active} = user
+        return(
+            <div>
+                <b style={{
+                    // active값이 true라면 green, 아니라면 black
+                    color: active ? 'green' : 'black',
+                    cursor:'pointer'
+                }}>{username}</b><span>({email})</span>
+                <button onClick={() => onRemove(id)}>삭제</button>
+            </div>
+        )
+}
+```
+
+- 클릭으로 바뀌게 하기
+
+```javascript
+// 배열에서 특정 값 수정하기
+// active 값을 반전시키기 위해
+// 불변성을 지키면서 배열을 업데이트 할때엔 map() 사용
+// 전체 배열 중, id가 일치하면 업데이트, 일치하지 않는다면 그대로 둔다.
+// user.id가 파라미터로 가져온 id를 비교할건데,
+// 불변성을 지켜주기 위해 user객체에 스프레드 연산자 사용
+// 호출할때마다 반전, 일치하지 않는다면 기존값 사용
+const onToggle = id => {
+  setUsers(users.map(
+    user=>user.id === id 
+    ?{...user,active:!user.active}
+    :user
+  ));
+}
 ```
